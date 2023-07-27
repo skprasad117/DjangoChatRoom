@@ -19,6 +19,7 @@
     <center><h1>Chat</h1></center>
     <center><h1>{{roomname}}</h1></center>
     <center><h1>hello {{request.user.username }} !!</h1></center>
+    <center><h3>Notifications : </h3><p id = "notifier"></p></center>
     <br>
     {% if request.user.is_authenticated  %}
     <center> Logout the chat Page <a href = "{% url 'logout-user' %}">Logout</a></center>
@@ -77,15 +78,33 @@
           "#id_message_send_input"
         ).value;
 
-        chatSocket.send(JSON.stringify({ message: messageInput, username : "{{request.user.username}}"}));
+        chatSocket.send(JSON.stringify({ message: messageInput, username : "{{request.user.username}}", reciver : "{{roomname}}"}));
       };
       
       chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         var div = document.createElement("div");
-        div.innerHTML = data.username + " : " + data.message;
+        var not = document.getElementById("notifier")
+        console.log(data.flag)
+        function emptyElement() {
+          not.innerHTML = '';
+        }
+        
+        if(data.flag == "notification"){
+
+          console.log("hello","{{request.user.username}}",data.username)
+          if(data.username == "{{request.user.username}}"){
+            console.log("this message is for you")
+            not.innerHTML = data.message
+            setTimeout(emptyElement, 4000);
+          }
+          
+        }
+        else{
+          div.innerHTML = data.username + " : " + data.message;
         document.querySelector("#id_message_send_input").value = "";
         document.querySelector("#id_chat_item_container").appendChild(div);
+        }
       };
     </script>
 </body>
