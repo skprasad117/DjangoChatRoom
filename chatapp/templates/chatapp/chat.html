@@ -33,7 +33,13 @@
       <button type="submit" id="id_message_send_button">Send Message</button>
       <br />
       <br />
+      {% for message in history %}
+      <p>{{message}}</p>
+      
+      {% endfor %}
+      <p>-------history closed---------</p>
     </div>
+   
 
 
     <div class="right-aligned-div">

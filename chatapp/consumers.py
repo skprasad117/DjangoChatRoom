@@ -1,9 +1,15 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.consumer import SyncConsumer
+
+
+from .models import ChatRoom
+from channels.db import database_sync_to_async
 class ChatConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
+		
 		self.roomGroupName = self.scope['url_route']['kwargs']['roomname']
+		
 		print("roomname .......",self.roomGroupName)
 		await self.channel_layer.group_add(
 			self.roomGroupName ,
@@ -27,7 +33,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
 				"message" : message ,
 				"username" : username ,
 			})
+		await database_sync_to_async(self.update_chat_history)(message,username)
 	async def sendMessage(self , event) :
 		message = event["message"]
 		username = event["username"]
 		await self.send(text_data = json.dumps({"message":message ,"username":username}))
+
+
+
+	def update_chat_history(self,message,username):
+		print(message,username)
+		
+
+		message_string_to_update = username +"-"+message
+		print("current update",message_string_to_update)
+		chat_history_instancne = ChatRoom.objects.get(roomname=self.roomGroupName)
+		chat_history_instancne_previous_messages = chat_history_instancne.messages
+		print("previous messages",chat_history_instancne_previous_messages)
+		if chat_history_instancne_previous_messages =="":
+			chat_history_instancne.messages = message_string_to_update
+			chat_history_instancne.save()
+		else:
+			chat_history_instancne.messages = chat_history_instancne_previous_messages + ","+ message_string_to_update
+			chat_history_instancne.save()
+		print(message_string_to_update)
+		return None
