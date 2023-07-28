@@ -1,17 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <style>
     .right-aligned-div {
       position: fixed;
-      width: 150px;
+      width: 120px;
       top: 100px; 
       right: 20px;
-      background-color: aquamarine;
+      background-color:beige;
        }
+    .button{
+      top: 50px; 
+    }
+    #id_chat_item_container{
+      background-color: antiquewhite;
+      width: 60%;
+      height: 50px;
+    }
+    #online{
+      color: green;
+    }
+    #offline{
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -24,37 +39,49 @@
     {% if request.user.is_authenticated  %}
     <center> Logout the chat Page <a href = "{% url 'logout-user' %}">Logout</a></center>
     {% endif %}
+    <center><p id="online-list"></p></center>
+    <center><textarea name="" id="chat-area" cols="80" rows="20">
+     
+      {% for message in history %}
+      {{message}}
+      {% endfor %}
+      <p>-------history closed---------</p>
+    </textarea></center>
     <div
       class="chat__item__container"
       id="id_chat_item_container"
-      style="font-size: 20px"
+      style="font-size: 20px; width: 100%;"
+    
     >
       <br />
-      <input type="text" id="id_message_send_input" />
+      <center>
+        <input type="text" id="id_message_send_input"/>
       <button type="submit" id="id_message_send_button">Send Message</button>
+      </center>
       <br />
       <br />
-      {% for message in history %}
+      <!-- {% for message in history %}
       <p>{{message}}</p>
       
       {% endfor %}
-      <p>-------history closed---------</p>
+      <p>-------history closed---------</p> -->
     </div>
    
-
-
-    <div class="right-aligned-div">
+    <div class = "right-aligned-div button" id="chat-button">User List</div>
+    <!-- <div class="right-aligned-div" id="online-users-container">
     {% for user in users %}
       {% if request.user.username != user.username %}
       
-      <a href="http://127.0.0.1:8000/{{user.username}}"><p>{{user.username}}</p></a>
+        <a href="http://127.0.0.1:8000/{{user.username}}"><p>{{user.username}}</p></a>
       {% endif %}
     {% endfor %}
-    </div>
-
+    </div> -->
+    <div class="right-aligned-div" id="online-users-container"></div>
 
     {{roomname|json_script:"group-name"}}
     <script>
+     
+      // document.getElementById("online-list").innerHTML = online_status
       const groupName = JSON.parse(document.getElementById('group-name').textContent)
       console.log("group name is ",groupName)
       const chatSocket = new WebSocket("ws://" + window.location.host + "/ws/"+groupName+"/");
@@ -77,15 +104,16 @@
         var messageInput = document.querySelector(
           "#id_message_send_input"
         ).value;
-
+        document.querySelector("#id_message_send_input").value = "";
         chatSocket.send(JSON.stringify({ message: messageInput, username : "{{request.user.username}}", reciver : "{{roomname}}"}));
       };
       
       chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         var div = document.createElement("div");
+        var chatbox = document.getElementById("chat-area")
         var not = document.getElementById("notifier")
-        console.log(data.flag)
+        // console.log(data.flag)
         function emptyElement() {
           not.innerHTML = '';
         }
@@ -95,17 +123,84 @@
           console.log("hello","{{request.user.username}}",data.username)
           if(data.username == "{{request.user.username}}"){
             console.log("this message is for you")
+
             not.innerHTML = data.message
+            notificationalertFunction(data.message)
             setTimeout(emptyElement, 4000);
+            
+
           }
           
         }
+        else if(data.flag == "userstatus"){
+          // console.log(data.flag)
+          console.log(data.message,typeof(data.message))
+          console.log(typeof(JSON.parse(JSON.stringify(data.message))))
+          console.log(JSON.parse(JSON.stringify(data.message))[0])
+          var user_status = JSON.parse(JSON.stringify(data.message))
+          var onlinelist = document.getElementById("online-list")
+          
+          online_status = ""
+          var ins = document.getElementById("online-users-container")
+          ins.innerHTML = ""
+          for (let i=0 ; i<user_status.length; i++){
+         // console.log(user_status[i])
+         var status = ""
+         online_status = online_status + user_status[i]["name"]+ " : "+ status +"\n"
+         var ins = document.getElementById("online-users-container")
+         if(user_status[i]["status"]==true){
+          // console.log("online")
+          status = "Online"
+          ins.innerHTML += "<a id = 'online' href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
+         }
+         else{
+          status = "Offline"
+          ins.innerHTML += "<a id = 'offline'href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
+         }
+         
+        
+        //  console.log("<a href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+"</p></a>")
+         
+         document.body.appendChild(ins)
+        
+        }
+        // ins.innerHTML += "<a href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
+        // document.body.appendChild(ins)
+        
+        // var ins = document.getElementById("online-users-container")
+        // ins.innerHTML = "<a href='http://127.0.0.1:8000/{{user.username}}'><p>{{user.username}}</p></a>"
+        // document.body.appendChild(ins)
+
+          // user_status = JSON.stringify(user_status)
+          // onlinelist.innerHTML = user_status
+          // onlinelist.innerHTML = user_status[0]["name"]+ ":"
+        }
         else{
-          div.innerHTML = data.username + " : " + data.message;
-        document.querySelector("#id_message_send_input").value = "";
-        document.querySelector("#id_chat_item_container").appendChild(div);
+          chatbox = chatbox.append(data.username + " : " + data.message+"\n");
+         
+      
+          // document.querySelector("#id_message_send_input").value = "";
+          // document.querySelector("#id_chat_item_container").appendChild(div);
         }
       };
+
+      $(document).ready(function(){
+        $('#chat-button').click(function() {
+          $('#online-users-container').toggle("slide");
+        });
+      });
+
+      function notificationalertFunction(arg){
+        var title_instance = document.getElementsByTagName("title")[0];
+        alert(title_instance.innerHTML = arg)
+        alert(arg)
+        
+        setTimeout(function() {
+          title_instance.innerHTML = "all things are catched up"
+        },3000);
+
+            }
+     
     </script>
 </body>
 </html>

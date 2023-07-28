@@ -10,10 +10,14 @@ from channels.db import database_sync_to_async
 
 class ChatConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
+		
+		print("---------------------")
+		# print(userlist)
 		self.roomGroupName = self.scope['url_route']['kwargs']['roomname']
 		self.notificationgroup = "notification"
 		await database_sync_to_async(self.user_logged)(self.scope['user'])
-		
+		userlist = await database_sync_to_async(self.get_update)()
+
 		print("roomname .......",self.roomGroupName)
 		await self.channel_layer.group_add(
 			self.roomGroupName ,
@@ -27,20 +31,44 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			self.channel_name
 		)
 		print("channel_name",self.channel_name)
+		
 		await self.accept()
+		print("user joined---------------")
+	
+		# print(updated_user_list)
+		await self.channel_layer.group_send(
+			self.notificationgroup,{
+			"type" : "sendMessage" ,
+			"flag": "userstatus",
+			"message" : userlist,
+			"username" : "username" ,
+			}
+		)
+
 		
 	async def disconnect(self , close_code):
+		print("user left---------------")
+		await database_sync_to_async(self.user_disconnect)(self.scope['user'])
+		userlist = await database_sync_to_async(self.get_update)()
+		await self.channel_layer.group_send(
+			self.notificationgroup,{
+			"type" : "sendMessage" ,
+			"flag": "userstatus",
+			"message" : userlist,
+			"username" : "username" ,
+			}
+		)
 		await database_sync_to_async(self.user_disconnect)(self.scope['user'])
 		await self.channel_layer.group_discard(
 			self.roomGroupName ,
 			self.channel_layer
 		)
-		
-
 		await self.channel_layer.group_discard(
 			self.notificationgroup ,
 			self.channel_layer
 		)
+		await super().disconnect(close_code)
+		
 
 	async def receive(self, text_data):
 		text_data_json = json.loads(text_data)
@@ -111,4 +139,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 	
 	def get_update(self):
 		logged_user_instance = OnlineUsers.objects.all()
+		print("*"*50)
+		logged_user_instance = [{"status": user.status, "name" :user.user.username } for user in logged_user_instance ]
+		print(logged_user_instance)
+
 		return logged_user_instance

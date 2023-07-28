@@ -2,12 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 
-from .models import ChatRoom
+from .models import ChatRoom, OnlineUsers
 from channels.db import database_sync_to_async
-
+from .utils import upadte_and_get_user_status_list
 # Create your views here.
 def chatPage(request,roomname=None):
     if not request.user.is_authenticated:
+        
         return redirect("login-user")
     
     if roomname is None:
@@ -33,6 +34,12 @@ def chatPage(request,roomname=None):
    
     print("type of ",type(roomname),roomname.isnumeric())
     print("roomname -----:", roomname)
+
     users = User.objects.all()
+    upadte_and_get_user_status_list()
+
     context = {"users":users,"roomname":roomname,"history": previous_messages}
+    # print(context)
     return render(request,"chatapp/chat.html", context)
+
+
