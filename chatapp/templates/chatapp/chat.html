@@ -31,10 +31,10 @@
 </head>
 <body>
   <body>
-    <center><h1>Chat</h1></center>
+    <!-- <center><h1>Chat</h1></center> -->
     <center><h1>{{roomname}}</h1></center>
     <center><h1>hello {{request.user.username }} !!</h1></center>
-    <center><h3>Notifications : </h3><p id = "notifier"></p></center>
+    <center style="color:blue"><h3>Notifications : </h3><p id = "notifier"></p></center>
     <br>
     {% if request.user.is_authenticated  %}
     <center> Logout the chat Page <a href = "{% url 'logout-user' %}">Logout</a></center>
@@ -67,7 +67,7 @@
       <p>-------history closed---------</p> -->
     </div>
    
-    <div class = "right-aligned-div button" id="chat-button">User List</div>
+    <div class = "right-aligned-div button" id="chat-button">Click to Toggle</div>
     <!-- <div class="right-aligned-div" id="online-users-container">
     {% for user in users %}
       {% if request.user.username != user.username %}
@@ -144,24 +144,28 @@
           var ins = document.getElementById("online-users-container")
           ins.innerHTML = ""
           for (let i=0 ; i<user_status.length; i++){
-         // console.log(user_status[i])
-         var status = ""
-         online_status = online_status + user_status[i]["name"]+ " : "+ status +"\n"
-         var ins = document.getElementById("online-users-container")
-         if(user_status[i]["status"]==true){
-          // console.log("online")
-          status = "Online"
-          ins.innerHTML += "<a id = 'online' href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
-         }
-         else{
-          status = "Offline"
-          ins.innerHTML += "<a id = 'offline'href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
-         }
+              // console.log(user_status[i])
+              if(user_status[i]["name"]!="{{request.user.username}}"){
+                var status = ""
+              online_status = online_status + user_status[i]["name"]+ " : "+ status +"\n"
+              var ins = document.getElementById("online-users-container")
+              if(user_status[i]["status"]==true){
+                // console.log("online")
+                status = "Online"
+                ins.innerHTML += "<a id = 'online' href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
+              }
+              else{
+                status = "Offline"
+                ins.innerHTML += "<a id = 'offline'href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
+              }
          
         
         //  console.log("<a href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+"</p></a>")
          
          document.body.appendChild(ins)
+                
+              }
+              
         
         }
         // ins.innerHTML += "<a href='http://127.0.0.1:8000/"+user_status[i]["name"]+"/'><p>"+user_status[i]["name"]+ " : "+ status +"</p></a>"
